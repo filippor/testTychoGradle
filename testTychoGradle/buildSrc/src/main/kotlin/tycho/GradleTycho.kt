@@ -25,7 +25,6 @@ class GradleTycho : Plugin<Project> {
 		val TYCHO_INSTALL_ZIP = "tychoInstall"
 		val TYCHO_BUNDLES = "tychoBundles"
 
-		val EXTRA_TYCHO_SYSTEM_PACKAGES = "extraTychoSystemPackages"
 	}
 
 
@@ -114,19 +113,18 @@ class GradleTycho : Plugin<Project> {
 	//    static void addDownloadTask(Project project) {
 //        project.task("resolveP2",  dependsOn: [project.configurations[TYCHO_INSTALL_ZIP], project.configurations[TYCHO_BUNDLES]]) { doLast{ } }
 //    }
-	//fun pair(name:string,value)= Pair
 	fun createEquinoxEmbedder(project: Project) {
 		project.logger.info("create equinox embedder")
 		var sdkArchive = project.configurations.getByName(TYCHO_INSTALL_ZIP).getSingleFile()
 
+		//unzip(src: sdkArchive, dest: sdkArchive. parentFile, overwrite: true)
 		project.ant.invokeMethod("unzip", mapOf(
 				"src" to sdkArchive,
 				"dest" to sdkArchive.parentFile,
 				"overwrite" to true
 		))
-		//unzip(src: sdkArchive, dest: sdkArchive. parentFile, overwrite: true)
 		var installLocation = File(sdkArchive.parentFile, "eclipse");
-		
+
 		with(project.extensions.getByType(EquinoxEmbedderDesc::class.java)) {
 			var la = MavenGradleLoggerAdapter(project.logger)
 			logger = la
@@ -146,32 +144,29 @@ class GradleTycho : Plugin<Project> {
 		project.logger.info("resolve p2 dependency")
 		val EqEmbDesc = project.extensions.getByType(EquinoxEmbedderDesc::class.java)
 		var embedder = EqEmbDesc.embedder
-		if (embedder != null)
-			try {
-				embedder.start();
-				val resolverFactory = embedder.getService(P2ResolverFactory::class.java);
-				val targetPlatform = resolverFactory.getTargetPlatformFactory().createTargetPlatform(
-						targetPlatformStub(EqEmbDesc.p2repo),
-						EqEmbDesc.executionEnviroment, null, null);
+		embedder?.use({
+			embedder.start();
+			val resolverFactory = embedder.getService(P2ResolverFactory::class.java);
+			val targetPlatform = resolverFactory.getTargetPlatformFactory().createTargetPlatform(
+					targetPlatformStub(EqEmbDesc.p2repo),
+					EqEmbDesc.executionEnviroment, null, null);
 
-				(project.extensions.getByName("p2dependencies") as InstallableUnitContainerDesc).installableUnits.forEach({ conf ->
+			(project.extensions.getByName("p2dependencies") as InstallableUnitContainerDesc).installableUnits.forEach({ conf ->
 
-					val p2Resolver = resolverFactory.createResolver(EqEmbDesc.logger);
-					conf.value.forEach({
-						p2Resolver.addDependency(it.type, it.id, it.versionRange);
-					})
-					val dependencies = p2Resolver.resolveDependencies(targetPlatform, null);
-
-					dependencies.forEach {
-						it.artifacts.forEach {
-							project.logger.info("add " + it.location + " to config " + conf.key)
-							project.dependencies.add(conf.key, project.files(it.location))
-						}
-					}
+				val p2Resolver = resolverFactory.createResolver(EqEmbDesc.logger);
+				conf.value.forEach({
+					p2Resolver.addDependency(it.type, it.id, it.versionRange);
 				})
-			} finally {
-				embedder.close();
-			}
+				val dependencies = p2Resolver.resolveDependencies(targetPlatform, null);
+
+				dependencies.forEach {
+					it.artifacts.forEach {
+						project.logger.info("add " + it.location + " to config " + conf.key)
+						project.dependencies.add(conf.key, project.files(it.location))
+					}
+				}
+			})
+		})
 	}
 
 	fun targetPlatformStub(p2repo: MavenRepositoryLocation?): TargetPlatformConfigurationStub {
