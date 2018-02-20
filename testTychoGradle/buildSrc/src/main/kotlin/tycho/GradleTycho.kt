@@ -63,14 +63,13 @@ fun Project.p2dependencies(configuration: P2DependencyHandlerScope.() -> Unit) =
 
 
 class P2DependencyHandlerScope(val deps: InstallableUnitContainerDesc) {
+	
 	operator fun String.invoke(dependencyNotation: InstallableUnitDesc) =
 			deps.add(this, dependencyNotation)
 
-	operator fun Configuration.invoke(dependencyNotation: InstallableUnitDesc): InstallableUnitDesc {
+	operator fun Configuration.invoke(dependencyNotation: InstallableUnitDesc)=
 		deps.add(name, dependencyNotation)
-		return dependencyNotation
-	}
-
+	
 	fun eclipsePlugin(id: String, versionRange: String) = InstallableUnitDesc(ArtifactType.TYPE_ECLIPSE_PLUGIN, id, versionRange)
 
 }
@@ -78,12 +77,12 @@ class P2DependencyHandlerScope(val deps: InstallableUnitContainerDesc) {
 
 open class InstallableUnitContainerDesc(var installableUnits: MutableMap<String, MutableList<InstallableUnitDesc>> = mutableMapOf()) {
 	fun add(configurationName: String, iu: InstallableUnitDesc) {
-		var ius = installableUnits[configurationName];
-		if (ius == null) {
-			ius = ArrayList();
-			installableUnits.put(configurationName, ius)
-		}
-		ius.add(iu)
+		var ius = installableUnits[configurationName]
+		if(ius==null)
+			installableUnits[configurationName]=mutableListOf(iu)
+		else
+			ius.add(iu)
+		
 	}
 
 
