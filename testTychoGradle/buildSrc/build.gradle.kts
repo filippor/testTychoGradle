@@ -15,8 +15,8 @@ repositories {
 }
 gradlePlugin {
     (plugins) {
-        "myPlugin" {
-            id = "it.filippor.tycho.GradleTycho"
+        "gradle-tycho" {
+            id = "gradle-tycho"
             implementationClass = "it.filippor.tycho.GradleTycho"
         }
     }
@@ -24,7 +24,8 @@ gradlePlugin {
 dependencies {
     compile(gradleApi())
 //    compile(localGroovy())
-    compile ("org.eclipse.tycho:org.eclipse.tycho.p2.resolver.shared:1+")
+
+	compile ("org.eclipse.tycho:org.eclipse.tycho.p2.resolver.shared:1+")
     compile ("org.eclipse.tycho:org.eclipse.osgi:+")
 
     compile ("org.eclipse.tycho:org.eclipse.tycho.embedder.shared:1+")

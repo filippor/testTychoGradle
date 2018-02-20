@@ -5,6 +5,7 @@ import it.filippor.tycho.library.MavenGradleLoggerAdapter
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.artifacts.*
+import org.gradle.kotlin.dsl.*
 import java.net.URI
 
 import org.eclipse.tycho.ArtifactType
@@ -18,6 +19,77 @@ import org.eclipse.tycho.p2.resolver.facade.P2ResolverFactory
 import org.eclipse.tycho.p2.target.facade.TargetPlatformConfigurationStub
 import org.eclipse.tycho.p2.target.facade.TargetPlatformFactory
 import java.io.File
+import java.lang.NullPointerException
+
+/**
+ *  Extension class providing top-level content of the DSL definition for the plug-in.
+ */
+open class EquinoxEmbedderDesc(
+		var tychoVersion: String = "1.1.0",
+		var extraSystemPackage: List<String> = mutableListOf(
+				"org.eclipse.tycho",
+				"org.eclipse.tycho.artifacts",
+				"org.eclipse.tycho.core.ee.shared",
+				"org.eclipse.tycho.core.shared",
+				"org.eclipse.tycho.core.resolver.shared",
+				"org.eclipse.tycho.locking.facade",
+				"org.eclipse.tycho.p2.metadata",
+				"org.eclipse.tycho.p2.repository",
+				"org.eclipse.tycho.p2.resolver.facade",
+				"org.eclipse.tycho.p2.target.facade",
+				"org.eclipse.tycho.p2.tools",
+				"org.eclipse.tycho.p2.tools.director.shared",
+				"org.eclipse.tycho.p2.tools.publisher.facade",
+				"org.eclipse.tycho.p2.tools.mirroring.facade",
+				"org.eclipse.tycho.p2.tools.verifier.facade",
+				"org.eclipse.tycho.repository.registry.facade",
+				"org.eclipse.tycho.p2.tools.baseline.facade"
+		),
+		var p2repo: MavenRepositoryLocation = MavenRepositoryLocation("Oxygen", URI.create("http://download.eclipse.org/releases/oxygen")),
+		var executionEnviroment: ExecutionEnvironmentConfigurationStub = ExecutionEnvironmentConfigurationStub("JavaSE-1.8"),
+		internal var embedder: EquinoxEmbedder? = null,
+		internal var logger: MavenLogger? = null
+) {
+	fun repo(name: String, url: String) {
+		p2repo = MavenRepositoryLocation(name, URI.create(url));
+	}
+}
+
+fun Project.p2dependencies(configuration: P2DependencyHandlerScope.() -> Unit) =
+		P2DependencyHandlerScope(extensions["p2Dependencies"] as InstallableUnitContainerDesc).configuration()
+
+
+
+
+
+class P2DependencyHandlerScope(val deps: InstallableUnitContainerDesc) {
+	operator fun String.invoke(dependencyNotation: InstallableUnitDesc) =
+			deps.add(this, dependencyNotation)
+
+	operator fun Configuration.invoke(dependencyNotation: InstallableUnitDesc): InstallableUnitDesc {
+		deps.add(name, dependencyNotation)
+		return dependencyNotation
+	}
+
+	fun eclipsePlugin(id: String, versionRange: String) = InstallableUnitDesc(ArtifactType.TYPE_ECLIPSE_PLUGIN, id, versionRange)
+
+}
+
+
+open class InstallableUnitContainerDesc(var installableUnits: MutableMap<String, MutableList<InstallableUnitDesc>> = mutableMapOf()) {
+	fun add(configurationName: String, iu: InstallableUnitDesc) {
+		var ius = installableUnits[configurationName];
+		if (ius == null) {
+			ius = ArrayList();
+			installableUnits.put(configurationName, ius)
+		}
+		ius.add(iu)
+	}
+
+
+}
+
+data class InstallableUnitDesc(var type: String, var id: String, var versionRange: String)
 
 
 class GradleTycho : Plugin<Project> {
@@ -26,57 +98,6 @@ class GradleTycho : Plugin<Project> {
 		val TYCHO_BUNDLES = "tychoBundles"
 
 	}
-
-
-	/**
-	 *  Extension class providing top-level content of the DSL definition for the plug-in.
-	 */
-	open class EquinoxEmbedderDesc(
-			var tychoVersion: String = "1.1.0",
-			var extraSystemPackage: List<String> = mutableListOf(
-					"org.eclipse.tycho",
-					"org.eclipse.tycho.artifacts",
-					"org.eclipse.tycho.core.ee.shared",
-					"org.eclipse.tycho.core.shared",
-					"org.eclipse.tycho.core.resolver.shared",
-					"org.eclipse.tycho.locking.facade",
-					"org.eclipse.tycho.p2.metadata",
-					"org.eclipse.tycho.p2.repository",
-					"org.eclipse.tycho.p2.resolver.facade",
-					"org.eclipse.tycho.p2.target.facade",
-					"org.eclipse.tycho.p2.tools",
-					"org.eclipse.tycho.p2.tools.director.shared",
-					"org.eclipse.tycho.p2.tools.publisher.facade",
-					"org.eclipse.tycho.p2.tools.mirroring.facade",
-					"org.eclipse.tycho.p2.tools.verifier.facade",
-					"org.eclipse.tycho.repository.registry.facade",
-					"org.eclipse.tycho.p2.tools.baseline.facade"
-			),
-			var p2repo: MavenRepositoryLocation = MavenRepositoryLocation("Oxygen", URI.create("http://download.eclipse.org/releases/oxygen")),
-			var executionEnviroment: ExecutionEnvironmentConfigurationStub = ExecutionEnvironmentConfigurationStub("JavaSE-1.8"),
-			internal var embedder: EquinoxEmbedder? = null,
-			internal var logger: MavenLogger? = null
-	) {
-		fun repo(name: String, url: String) {
-			p2repo = MavenRepositoryLocation(name, URI.create(url));
-		}
-	}
-
-	open class InstallableUnitContainerDesc(var installableUnits: MutableMap<String, MutableList<InstallableUnitDesc>> = mutableMapOf()) {
-		fun add(configurationName: String, iu: InstallableUnitDesc) {
-			var ius = installableUnits[configurationName];
-			if (ius == null) {
-				ius = ArrayList();
-				installableUnits.put(configurationName, ius)
-			}
-			ius.add(iu)
-		}
-
-		fun eclipsePlugin(id: String, versionRange: String) = InstallableUnitDesc(ArtifactType.TYPE_ECLIPSE_PLUGIN, id, versionRange)
-
-	}
-
-	data class InstallableUnitDesc(var type: String, var id: String, var versionRange: String)
 
 
 	override fun apply(project: Project) {
@@ -90,23 +111,26 @@ class GradleTycho : Plugin<Project> {
 
 	fun configureProject(project: Project) {
 
-		println("configure Test")
+		with(project) {
+			extensions.create("equinoxEmbedder", EquinoxEmbedderDesc::class.java)
+			extensions.create("p2Dependencies", InstallableUnitContainerDesc::class.java)
 
-		project.extensions.create("equinoxEmbedder", EquinoxEmbedderDesc::class.java)
-		var eqDesc = project.extensions.getByType(EquinoxEmbedderDesc::class.java)
-		project.configurations.create(TYCHO_INSTALL_ZIP);
-		project.dependencies.add(
-				TYCHO_INSTALL_ZIP, "org.eclipse.tycho:tycho-bundles-external:${eqDesc.tychoVersion}@zip");
-		project.configurations.create(TYCHO_BUNDLES);
+			var eqDesc = extensions["equinoxEmbedder"] as EquinoxEmbedderDesc
 
-		project.dependencies.add(TYCHO_BUNDLES, "org.eclipse.tycho:org.eclipse.tycho.p2.resolver.impl:${eqDesc.tychoVersion}");
-		project.dependencies.add(TYCHO_BUNDLES, "org.eclipse.tycho:org.eclipse.tycho.p2.maven.repository:${eqDesc.tychoVersion}");
-		project.dependencies.add(TYCHO_BUNDLES, "org.eclipse.tycho:org.eclipse.tycho.p2.tools.impl:${eqDesc.tychoVersion}");
+			configurations {
+				create(TYCHO_INSTALL_ZIP)
+				create(TYCHO_BUNDLES)
+			}
+			dependencies {
+				TYCHO_INSTALL_ZIP("org.eclipse.tycho:tycho-bundles-external:${eqDesc.tychoVersion}@zip")
+				TYCHO_BUNDLES("org.eclipse.tycho:org.eclipse.tycho.p2.resolver.impl:${eqDesc.tychoVersion}")
+				TYCHO_BUNDLES("org.eclipse.tycho:org.eclipse.tycho.p2.maven.repository:${eqDesc.tychoVersion}")
+				TYCHO_BUNDLES("org.eclipse.tycho:org.eclipse.tycho.p2.tools.impl:${eqDesc.tychoVersion}")
+
+			}
 
 
-
-
-		project.extensions.create("p2dependencies", InstallableUnitContainerDesc::class.java)
+		}
 	}
 
 
@@ -143,30 +167,33 @@ class GradleTycho : Plugin<Project> {
 	fun resolveDeps(project: Project) {
 		project.logger.info("resolve p2 dependency")
 		val EqEmbDesc = project.extensions.getByType(EquinoxEmbedderDesc::class.java)
-		var embedder = EqEmbDesc.embedder
-		embedder?.use({
-			embedder.start();
-			val resolverFactory = embedder.getService(P2ResolverFactory::class.java);
-			val targetPlatform = resolverFactory.getTargetPlatformFactory().createTargetPlatform(
-					targetPlatformStub(EqEmbDesc.p2repo),
-					EqEmbDesc.executionEnviroment, null, null);
 
-			(project.extensions.getByName("p2dependencies") as InstallableUnitContainerDesc).installableUnits.forEach({ conf ->
+		val embedder = EqEmbDesc.embedder ?: throw IllegalStateException("Embedder Is Null")
+		try{
+		embedder.start();
+		val resolverFactory = embedder.getService(P2ResolverFactory::class.java);
+		val targetPlatform = resolverFactory.getTargetPlatformFactory().createTargetPlatform(
+				targetPlatformStub(EqEmbDesc.p2repo),
+				EqEmbDesc.executionEnviroment, null, null);
 
-				val p2Resolver = resolverFactory.createResolver(EqEmbDesc.logger);
-				conf.value.forEach({
-					p2Resolver.addDependency(it.type, it.id, it.versionRange);
-				})
-				val dependencies = p2Resolver.resolveDependencies(targetPlatform, null);
+		(project.extensions.getByName("p2Dependencies") as InstallableUnitContainerDesc).installableUnits.forEach({ conf ->
 
-				dependencies.forEach {
-					it.artifacts.forEach {
-						project.logger.info("add " + it.location + " to config " + conf.key)
-						project.dependencies.add(conf.key, project.files(it.location))
-					}
-				}
+			val p2Resolver = resolverFactory.createResolver(EqEmbDesc.logger);
+			conf.value.forEach({
+				p2Resolver.addDependency(it.type, it.id, it.versionRange);
 			})
+			val dependencies = p2Resolver.resolveDependencies(targetPlatform, null);
+
+			dependencies.forEach {
+				it.artifacts.forEach {
+					project.logger.info("add " + it.location + " to config " + conf.key)
+					project.dependencies.add(conf.key, project.files(it.location))
+				}
+			}
 		})
+		}finally{
+			embedder.close()
+		}
 	}
 
 	fun targetPlatformStub(p2repo: MavenRepositoryLocation?): TargetPlatformConfigurationStub {

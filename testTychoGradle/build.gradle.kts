@@ -5,10 +5,12 @@
  * For more details take a look at the Java Libraries chapter in the Gradle
  * user guide available at https://docs.gradle.org/3.5/userguide/java_library_plugin.html
  */
-
+import it.filippor.tycho.*
 // Apply the java-library plugin to add support for Java Library
-apply plugin: 'java-library'
-apply plugin: it.filippor.tycho.GradleTycho
+plugins {
+	`java-library`
+	id("gradle-tycho")// version "1.0"
+}
 
 
 
@@ -16,9 +18,6 @@ apply plugin: it.filippor.tycho.GradleTycho
 repositories {
     // Use jcenter for resolving your dependencies.
     // You can declare any Maven/Ivy/file repository here.
-    maven{
-		url='https://repo.eclipse.org/content/repositories/tycho-snapshots/'
-	}
     mavenCentral() 
     jcenter()
 }
@@ -29,19 +28,20 @@ equinoxEmbedder{
     repo("Photon","http://download.eclipse.org/releases/photon")
 }
 p2dependencies{
-    add "compile", eclipsePlugin("org.eclipse.equinox.common","0.0.0")
-    add "compile", eclipsePlugin("org.eclipse.core.filesystem","0.0.0")
+    "compile"(eclipsePlugin("org.eclipse.equinox.common","0.0.0"))
+    "compile"(eclipsePlugin("org.eclipse.core.filesystem","0.0.0"))
 }
 
 
 dependencies {
+	
     // This dependency is exported to consumers, that is to say found on their compile classpath.
-    api 'org.apache.commons:commons-math3:3.6.1'
+    api ("org.apache.commons:commons-math3:3.6.1")
 
     // This dependency is used internally, and not exposed to consumers on their own compile classpath.
-    implementation 'com.google.guava:guava:21.0'
+    implementation ("com.google.guava:guava:21.0")
 
     // Use JUnit test framework
-    testImplementation 'junit:junit:4.12'
+    testImplementation ("junit:junit:4.12")
 }
 

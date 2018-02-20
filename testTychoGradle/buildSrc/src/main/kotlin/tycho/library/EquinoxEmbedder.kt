@@ -25,6 +25,7 @@ import org.eclipse.tycho.core.shared.MavenContext;
 import org.eclipse.tycho.core.shared.MavenContextImpl;
 import org.eclipse.tycho.core.shared.MavenLogger;
 import org.eclipse.tycho.locking.facade.FileLockService;
+import java.io.Closeable
 
 //from org.eclipse.sisu.equinox.embedder.internal.DefaultEquinoxEmbedder
 
@@ -129,7 +130,7 @@ class EquinoxEmbedder(
 	}
 
 
-	fun <T> registerService(clazz: Class<T>, service: T, properties: Dictionary<String, Any> = Hashtable<String, Any>(1)) {
+	fun <T> registerService(clazz: Class<T>, service: T, properties:Dictionary<String,out Any>? = null) {
 		// don't need to call checkStarted here because EmbeddedEquinox instances are already
 		// started
 		this.frameworkContext?.registerService(clazz, service, properties);
