@@ -9,8 +9,14 @@ import it.filippor.tycho.*
 // Apply the java-library plugin to add support for Java Library
 plugins {
 	`java-library`
-	id("gradle-tycho")// version "1.0"
+	id("gradle-tycho")
+	id("p2-bundle")
+	id("com.gradle.build-scan") version "1.12.1"   
 }
+buildScan {
+    setLicenseAgreementUrl("https://gradle.com/terms-of-service")
+    setLicenseAgree("yes")
+}                                      
 
 
 

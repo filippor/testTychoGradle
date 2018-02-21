@@ -20,6 +20,12 @@ gradlePlugin {
             implementationClass = "it.filippor.tycho.GradleTycho"
         }
     }
+    (plugins) {
+    	"p2-bundle" {
+    		id = "p2-bundle"
+    				implementationClass = "it.filippor.tycho.BundlePlugin"
+    	}
+    }
 }
 dependencies {
     compile(gradleApi())
@@ -31,6 +37,12 @@ dependencies {
     compile ("org.eclipse.tycho:org.eclipse.tycho.embedder.shared:1+")
     compile ("org.eclipse.tycho:org.eclipse.tycho.core.shared:1+")
     
+    compile ("org.eclipse.platform:org.eclipse.core.runtime:3.13+")
+    compile ("org.eclipse.platform:org.eclipse.equinox.common:3.9+")
+    compile ("org.eclipse.jdt:org.eclipse.jdt.junit.core:3.9+")
+    compile ("org.eclipse.tycho:org.eclipse.osgi.compatibility.state:1.1+")
+	compile ("org.eclipse.tycho:org.eclipse.osgi:3.13+")
+
     
 //    compile "org.eclipse.tycho:org.eclipse.tycho.p2.resolver.impl:${tychoVersion}"
 //    compile "org.eclipse.tycho:org.eclipse.tycho.p2.maven.repository:${tychoVersion}"
