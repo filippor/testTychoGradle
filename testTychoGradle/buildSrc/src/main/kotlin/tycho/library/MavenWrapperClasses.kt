@@ -14,6 +14,10 @@ import java.io.FileOutputStream
 import java.nio.channels.FileLock
 import java.io.IOException
 import org.eclipse.tycho.locking.facade.LockTimeoutException
+import org.eclipse.tycho.ReactorProject
+import org.eclipse.tycho.ReactorProjectIdentities
+import org.eclipse.tycho.BuildOutputDirectory
+import org.gradle.api.Project
 
 class MavenGradleLoggerAdapter(var log: Logger) : MavenLogger {
 	override fun warn(m: String?) {
@@ -149,5 +153,109 @@ class FileLockerImpl(val file: File) : FileLocker {
 	}
 
 	override fun isLocked(): Boolean = lock?.isValid ?: false
+
+}
+
+
+class ReactorProjectStub(var p:Project, var context: MutableMap<String,Any?> = mutableMapOf() ):ReactorProjectIdentities(),ReactorProject{	
+	override fun getContextValue(key: String?): Any? {
+		println("!!!!!!!!!!!!!!!!!!!! getContextValue($key)")
+		return context[key]
+	}
+
+	override fun sameProject(otherProject: Any?): Boolean {
+		println("!!!!!!!!!!!!!!!!!!!! sameProject($otherProject)")
+		return this === otherProject
+	}
+
+	override fun getExpandedVersion(): String? {
+		println("!!!!!!!!!!!!!!!!!!!! getExpandedVersion()")
+		TODO()
+	}
+
+	override fun getTestOutputDirectory(): File? {
+		println("!!!!!!!!!!!!!!!!!!!! getTestOutputDirectory()")
+		return  File(p.buildDir,"tesOoutputDir")
+	}
+
+	override fun setContextValue(key: String, value: Any?) {
+		println("!!!!!!!!!!!!!!!!!!!! setContextValue($key , $value)")
+		context[key]=value
+	}
+
+	override fun getDependencyMetadata(): MutableSet<*>? {
+		println("!!!!!!!!!!!!!!!!!!!! getDependencyMetadata()")
+		return null
+	}
+
+	override fun getDependencyMetadata(primary: Boolean): MutableSet<*>? {
+		println("!!!!!!!!!!!!!!!!!!!! getDependencyMetadata($primary)")
+		TODO()
+	}
+
+	override fun getIdentities(): ReactorProjectIdentities? {
+		println("!!!!!!!!!!!!!!!!!!!! getIdentities()")
+		return this
+	}
+
+	override fun getArtifactId(): String? {
+		println("!!!!!!!!!!!!!!!!!!!! getArtifactId()")
+		return p.name
+	}
+
+	override fun getId(): String? {
+		println("!!!!!!!!!!!!!!!!!!!! getId()")
+		return p.name
+	}
+
+	override fun getPackaging(): String? {
+		println("!!!!!!!!!!!!!!!!!!!! getPackaging()")
+		TODO()
+	}
+
+	override fun getOutputDirectory(): File? {
+		println("!!!!!!!!!!!!!!!!!!!! getOutputDirectory()")
+		return File(p.buildDir,"outputDir")
+	}
+
+	override fun getBuildDirectory(): BuildOutputDirectory? {
+		println("!!!!!!!!!!!!!!!!!!!! getBuildDirectory()")
+		return BuildOutputDirectory(p.buildDir)
+	}
+
+	override fun getArtifact(): File? {
+		println("!!!!!!!!!!!!!!!!!!!! getArtifact()")
+		TODO()
+	}
+
+	override fun getArtifact(artifactClassifier: String?): File? {
+		println("!!!!!!!!!!!!!!!!!!!! getArtifact($artifactClassifier)")
+		TODO()
+	}
+
+	override fun getGroupId(): String? {
+		println("!!!!!!!!!!!!!!!!!!!! getGroupId()")
+		return p.group.toString()
+	}
+
+	override fun getVersion(): String? {
+		println("!!!!!!!!!!!!!!!!!!!! getVersion()")
+		return p.version.toString()
+	}
+
+	override fun getBuildQualifier(): String? {
+		println("!!!!!!!!!!!!!!!!!!!! getBuildQualifier()")
+		return "jar"
+	}
+
+	override fun getBasedir(): File? {
+		println("!!!!!!!!!!!!!!!!!!!! getBasedir()")
+		TODO()
+	}
+
+	override fun setDependencyMetadata(primary: Boolean, installableUnits: MutableSet<*>?) {
+		println("!!!!!!!!!!!!!!!!!!!! setDependencyMetadata($primary ,$installableUnits )")
+		TODO()
+	}
 
 }

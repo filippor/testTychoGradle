@@ -62,21 +62,24 @@ class P2DependencyPlugin : Plugin<Project> {
 		project.extensions.create("p2Dependencies", InstallableUnitContainerDesc::class.java)
 
 	}
+
+	fun getEnbedderDesc(project: Project) = project.rootProject.allprojects.first { it.plugins.hasPlugin(GradleTycho::class.java)}.extensions.getByType(EquinoxEmbedderDesc::class.java)
+	
 	fun resolveDeps(project: Project) {
 		project.logger.info("resolve p2 dependency")
-		val EqEmbDesc = project.extensions.getByType(EquinoxEmbedderDesc::class.java)
+		val eqEmbDesc = getEnbedderDesc(project)
 
-		val embedder = EqEmbDesc.embedder ?: throw IllegalStateException("Embedder Is Null")
+		val embedder = eqEmbDesc.embedder ?: throw IllegalStateException("Embedder Is Null")
 		try {
 			embedder.start();
 			val resolverFactory = embedder.getService(P2ResolverFactory::class.java);
 			val targetPlatform = resolverFactory.getTargetPlatformFactory().createTargetPlatform(
-					targetPlatformStub(EqEmbDesc.p2repo),
-					EqEmbDesc.executionEnviroment, null, null);
+					targetPlatformStub(eqEmbDesc.p2repo),
+					eqEmbDesc.executionEnviroment, null, null);
 
 			(project.extensions.getByName("p2Dependencies") as InstallableUnitContainerDesc).installableUnits.forEach { conf ->
 
-				val p2Resolver = resolverFactory.createResolver(EqEmbDesc.logger);
+				val p2Resolver = resolverFactory.createResolver(eqEmbDesc.logger);
 				conf.value.forEach {
 					p2Resolver.addDependency(it.type, it.id, it.versionRange);
 				}
@@ -101,5 +104,5 @@ class P2DependencyPlugin : Plugin<Project> {
 		return tpConfiguration;
 	}
 
-	
 }
+

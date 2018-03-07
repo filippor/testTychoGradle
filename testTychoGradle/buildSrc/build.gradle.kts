@@ -32,6 +32,7 @@ dependencies {
 //    compile(localGroovy())
 
 	compile ("org.eclipse.tycho:org.eclipse.tycho.p2.resolver.shared:1+")
+	compile ("org.eclipse.tycho:org.eclipse.tycho.p2.tools.shared:1+")
     compile ("org.eclipse.tycho:org.eclipse.osgi:+")
 
     compile ("org.eclipse.tycho:org.eclipse.tycho.embedder.shared:1+")
@@ -43,7 +44,8 @@ dependencies {
     compile ("org.eclipse.tycho:org.eclipse.osgi.compatibility.state:1.1+")
 	compile ("org.eclipse.tycho:org.eclipse.osgi:3.13+")
 
-    
+    compile ("org.eclipse.platform:org.eclipse.equinox.p2.jarprocessor:1.0.500")
+
 //    compile "org.eclipse.tycho:org.eclipse.tycho.p2.resolver.impl:${tychoVersion}"
 //    compile "org.eclipse.tycho:org.eclipse.tycho.p2.maven.repository:${tychoVersion}"
 //    compile "org.eclipse.tycho:org.eclipse.tycho.p2.tools.impl:${tychoVersion}"
